@@ -15,8 +15,8 @@
     <canvas id="starCanvas"></canvas>
 
     <!-- Forest curtain panels for wish animation -->
-    <canvas id="leftCurtain"  class="forest-curtain" id="leftCurtain"></canvas>
-    <canvas id="rightCurtain" class="forest-curtain" id="rightCurtain"></canvas>
+    <canvas id="leftCurtain"  class="forest-curtain"></canvas>
+    <canvas id="rightCurtain" class="forest-curtain"></canvas>
 
     <!-- Brief green flash overlay -->
     <div id="flashOverlay"></div>
