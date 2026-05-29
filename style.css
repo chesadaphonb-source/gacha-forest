@@ -32,11 +32,21 @@ body {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: -2; /* นอนหลับลึกอยู่ชั้นใต้สุด */
-    background-image: url('forest-bg.png'); /* ➡️ ดึงภาพชื่อนี้ที่เซฟลงโฟลเดอร์รันคู่กัน */
+    z-index: -2;
+    background-image: url('forest-bg.png'); /* ➡️ วางรูปใหม่ชื่อเดิมได้เลย */
     background-size: cover;
     background-position: center;
     pointer-events: none;
+    
+    /* 🔥 ยัดเอฟเฟกต์ป่าหายใจเรืองแสงตรงนี้ */
+    animation: forestBreathe 8s ease-in-out infinite;
+}
+
+/* คุมลูปการเรืองแสงวูบวาบช้า ๆ บนจอโปรเจกเตอร์ */
+@keyframes forestBreathe {
+    0%   { filter: brightness(0.9) contrast(1); }
+    50%  { filter: brightness(1.2) contrast(1.1) saturate(1.2); }
+    100% { filter: brightness(0.9) contrast(1); }
 }
 
 /* ── Background canvas (สำหรับรันสัตว์ป่า) ── */
