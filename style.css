@@ -27,13 +27,13 @@ body {
     align-items: center;
 }
 
-/* ── 🌲 ชั้นดึงภาพป่าโบราณมียิวามาผูกใช้งาน 🌲 ── */
+/* ── 🌲 ชั้นผูกภาพป่าโบราณ ตรึงแผ่นหลังเต็มระบบ 🌲 ── */
 #forestBg {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: -2; /* นอนหลับลึกอยู่ล่างสุด */
-    background-image: url('forest-bg.png'); /* ➡️ ผูกสิทธิ์ชื่อรูปภาพป่าที่เจ้สร้างให้มะกี้ */
+    z-index: -2; /* นอนหลับลึกอยู่ชั้นใต้สุด */
+    background-image: url('forest-bg.png'); /* ➡️ ดึงภาพชื่อนี้ที่เซฟลงโฟลเดอร์รันคู่กัน */
     background-size: cover;
     background-position: center;
     pointer-events: none;
@@ -43,8 +43,8 @@ body {
 #starCanvas {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: -1; /* ทับอยู่เหนือนอกภาพป่า */
-    background: transparent; /* 🔥 บังคับใสเคลียร์เพื่อให้เห็นวิวทิวทัศน์แมกไม้ด้านหลัง */
+    z-index: -1; /* ประกบชั้นบนเหนือแผ่นภาพป่า */
+    background: transparent; /* ใสสะอาดหมดจดให้เห็นป่าด้านหลัง */
 }
 
 /* ==============================
@@ -76,7 +76,7 @@ body {
    CONTAINERS
    ============================== */
 .container {
-    z-index: 50; /* 🔥 ดัน UI คุมระบบขึ้นมาให้ชัดเจนพ้นชั้นแคนวาส */
+    z-index: 50; /* ดันหน้าควบคุมและปุ่มกดขึ้นมาพ้นเลเยอร์วาดเขียน */
     text-align: center;
     width: 90%;
     max-width: 800px;
@@ -299,7 +299,7 @@ input[type="text"]:focus {
     padding: 12px 25px;
     border-radius: 50px;
     cursor: pointer;
-    z-index: 10000; /* 🔥 ผลักขึ้นชั้นบนสุดพ้นระยะปิดม่าน */
+    z-index: 10000; /* ผลักปุ่มล็อกลอยเหนือแผงกั้นม่านเปิด */
     font-weight: bold; font-family: 'Kanit', sans-serif; font-size: 15px;
     backdrop-filter: blur(8px);
     box-shadow: 0 0 15px rgba(200, 168, 75, 0.15);
@@ -418,14 +418,12 @@ input[type="text"]:focus {
     white-space: normal; max-width: 50%; word-break: break-word;
 }
 
-/* ── Pulse animation (used inline for waiting state) ── */
+/* ── Animations ── */
 @keyframes pulse {
     0%   { transform: scale(1);    opacity: 1;   }
     50%  { transform: scale(0.98); opacity: 0.8; }
     100% { transform: scale(1);    opacity: 1;   }
 }
-
-/* ── Leaf drift animation for decorative elements ── */
 @keyframes leafDrift {
     0%   { transform: translateY(0) rotate(0deg);   opacity: 0.6; }
     50%  { transform: translateY(-8px) rotate(5deg); opacity: 0.9; }
