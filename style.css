@@ -27,12 +27,24 @@ body {
     align-items: center;
 }
 
-/* ── Background canvas ── */
+/* ── 🌲 ชั้นดึงภาพป่าโบราณมียิวามาผูกใช้งาน 🌲 ── */
+#forestBg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -2; /* นอนหลับลึกอยู่ล่างสุด */
+    background-image: url('forest-bg.png'); /* ➡️ ผูกสิทธิ์ชื่อรูปภาพป่าที่เจ้สร้างให้มะกี้ */
+    background-size: cover;
+    background-position: center;
+    pointer-events: none;
+}
+
+/* ── Background canvas (สำหรับรันสัตว์ป่า) ── */
 #starCanvas {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: -1;
-    background: radial-gradient(ellipse at 50% 80%, #0a1f0a 0%, #040c04 100%);
+    z-index: -1; /* ทับอยู่เหนือนอกภาพป่า */
+    background: transparent; /* 🔥 บังคับใสเคลียร์เพื่อให้เห็นวิวทิวทัศน์แมกไม้ด้านหลัง */
 }
 
 /* ==============================
@@ -64,7 +76,7 @@ body {
    CONTAINERS
    ============================== */
 .container {
-    z-index: 10;
+    z-index: 50; /* 🔥 ดัน UI คุมระบบขึ้นมาให้ชัดเจนพ้นชั้นแคนวาส */
     text-align: center;
     width: 90%;
     max-width: 800px;
@@ -287,7 +299,7 @@ input[type="text"]:focus {
     padding: 12px 25px;
     border-radius: 50px;
     cursor: pointer;
-    z-index: 9999;
+    z-index: 10000; /* 🔥 ผลักขึ้นชั้นบนสุดพ้นระยะปิดม่าน */
     font-weight: bold; font-family: 'Kanit', sans-serif; font-size: 15px;
     backdrop-filter: blur(8px);
     box-shadow: 0 0 15px rgba(200, 168, 75, 0.15);
