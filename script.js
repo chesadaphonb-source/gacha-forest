@@ -139,11 +139,14 @@ function loadData() {
 
             headers = lines[0].split(',').map(h => h.trim());
             participants = lines.slice(1).map(line => {
-                const data = line.split(',');
+                // 🔥 ตัวหั่นคำ CSV ขั้นสูง ป้องกันระบบเลื่อนคอลัมน์เวลาเจอเครื่องหมายคอมม่าในตาราง
+                const data = line.match(/(?:[^,]*|"(?:[^"]|\\")*")(?:,|$)/g).map(s => {
+                    return s.replace(/,$/, '').replace(/^"|"$/g, '').replace(/\\"/g, '"').trim();
+                });
                 if (data.length < 1) return null;
                 let obj = {};
-                headers.forEach((h, i) => obj[h] = data[i] ? data[i].trim() : "-");
-                obj._id = data[0] ? data[0].trim() : `ID-${Math.random().toString(36).substr(2, 5)}`;
+                headers.forEach((h, i) => obj[h] = data[i] ? data[i] : "-");
+                obj._id = data[0] ? data[0] : `ID-${Math.random().toString(36).substr(2, 5)}`;
                 return obj;
             }).filter(item => item !== null);
 
@@ -264,19 +267,15 @@ function playWarpAnimation(winners) {
     container.style.opacity    = '0';
     histBtn.style.display      = 'none';
 
-    // Redraw curtains with the tier's accent glow colour
     initCurtains(tier.color);
 
-    // ── Phase 1: Reset curtains off-screen ──────────────────────
     leftCanvas.style.transition  = 'none';
     rightCanvas.style.transition = 'none';
     leftCanvas.style.transform   = 'translateX(-100%)';
     rightCanvas.style.transform  = 'translateX(100%)';
 
-    // Force reflow so the reset takes effect before animating
     void leftCanvas.getBoundingClientRect();
 
-    // ── Phase 2 (t=300ms): Slide curtains inward ────────────────
     setTimeout(() => {
         const easing = 'cubic-bezier(0.33, 0, 0.5, 1)';
         leftCanvas.style.transition  = `transform 1.3s ${easing}`;
@@ -285,13 +284,10 @@ function playWarpAnimation(winners) {
         rightCanvas.style.transform  = 'translateX(0)';
     }, 300);
 
-    // ── Phase 3 (t=1800ms): Curtains fully closed — brief hold ──
     setTimeout(() => {
-        // Subtle green flash
         flash.style.background = '#050f05';
         flash.style.opacity    = '0.7';
 
-        // Shake the curtains (depth-of-impact feel)
         leftCanvas.style.transition  = 'transform 0.08s ease-in-out';
         rightCanvas.style.transition = 'transform 0.08s ease-in-out';
         leftCanvas.style.transform   = 'translateX(3%)';
@@ -304,14 +300,12 @@ function playWarpAnimation(winners) {
 
     }, 1700);
 
-    // ── Phase 4 (t=2100ms): Reveal ──────────────────────────────
     setTimeout(() => {
         flash.style.opacity = '0';
 
         showResults(winners, tier);
         if (isAdmin) db.ref('gameState').update({ status: 'REVEAL' });
 
-        // Burst curtains open
         const burstEasing = 'cubic-bezier(0.55, 0, 0.1, 1)';
         leftCanvas.style.transition  = `transform 0.55s ${burstEasing}`;
         rightCanvas.style.transition = `transform 0.55s ${burstEasing}`;
@@ -443,6 +437,7 @@ function resetGame() {
     window.location.reload();
 }
 
+// 👑 โค้ดดักฟังหัวคอลัมน์จาก Firebase กลับมาประดับบารมีที่เดิมแล้วไอ้เจษ!
 db.ref('config/headers').on('value', snapshot => {
     if (snapshot.exists()) {
         const serverHeaders = snapshot.val();
@@ -464,14 +459,9 @@ const canvas = document.getElementById('starCanvas');
 const ctx    = canvas.getContext('2d');
 let w, h;
 
-/* ── Static background layer (drawn once) ── */
-let bgCanvas  = null;
-let bgDirty   = true;
-
 function resize() {
     w = canvas.width  = window.innerWidth;
     h = canvas.height = window.innerHeight;
-    bgDirty = true;
     initCurtains(currentTierColor);
 }
 window.addEventListener('resize', resize); resize();
@@ -480,7 +470,6 @@ window.addEventListener('resize', resize); resize();
    CREATURE CLASSES
    ──────────────────────────────────────────── */
 
-/* ── Firefly ─────────────────────────────── */
 class Firefly {
     constructor() { this.reset(); }
     reset() {
@@ -528,7 +517,6 @@ class Firefly {
     }
 }
 
-/* ── Geometric Butterfly ─────────────────── */
 class Butterfly {
     constructor() { this.reset(); }
     reset() {
@@ -568,23 +556,19 @@ class Butterfly {
         ctx.rotate(Math.atan2(this.vy, this.vx) - Math.PI/2);
         ctx.globalAlpha = 0.82;
 
-        // Upper wings
         ctx.fillStyle = this.c1;
         ctx.beginPath(); ctx.moveTo(0,-s*.3); ctx.lineTo(-flap*s*1.6,-s*.6); ctx.lineTo(-flap*s*.7, s*.1); ctx.closePath(); ctx.fill();
         ctx.beginPath(); ctx.moveTo(0,-s*.3); ctx.lineTo( flap*s*1.6,-s*.6); ctx.lineTo( flap*s*.7, s*.1); ctx.closePath(); ctx.fill();
 
-        // Lower wings
         ctx.fillStyle = this.c2;
         ctx.beginPath(); ctx.moveTo(0,s*.1); ctx.lineTo(-flap*s*.95, s*.52); ctx.lineTo(-flap*s*.25, s*.4); ctx.closePath(); ctx.fill();
         ctx.beginPath(); ctx.moveTo(0,s*.1); ctx.lineTo( flap*s*.95, s*.52); ctx.lineTo( flap*s*.25, s*.4); ctx.closePath(); ctx.fill();
 
-        // Body
         ctx.fillStyle = '#1a0800';
         ctx.beginPath();
         ctx.ellipse(0, 0, s*.08, s*.45, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Antennae
         ctx.strokeStyle = '#3a1a00'; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
         ctx.beginPath(); ctx.moveTo(0,-s*.35); ctx.quadraticCurveTo(-s*.3,-s*.9, -s*.2,-s*1.1); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0,-s*.35); ctx.quadraticCurveTo( s*.3,-s*.9,  s*.2,-s*1.1); ctx.stroke();
@@ -593,7 +577,6 @@ class Butterfly {
     }
 }
 
-/* ── Geometric Dragonfly ─────────────────── */
 class Dragonfly {
     constructor() { this.reset(); }
     reset() {
@@ -635,7 +618,6 @@ class Dragonfly {
         ctx.rotate(this.angle);
         ctx.globalAlpha = 0.88;
 
-        // Wings (semi-transparent)
         ctx.fillStyle   = this.color + '55';
         ctx.strokeStyle = this.color + 'cc';
         ctx.lineWidth   = 0.8;
@@ -655,14 +637,12 @@ class Dragonfly {
             ctx.closePath(); ctx.fill(); ctx.stroke();
         });
 
-        // Body (elongated diamond)
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.moveTo(-s, 0); ctx.lineTo(0, -s*.18);
         ctx.lineTo(s*.65, 0); ctx.lineTo(0, s*.18);
         ctx.closePath(); ctx.fill();
 
-        // Head (bright circle)
         ctx.fillStyle = '#ffffff99';
         ctx.beginPath(); ctx.arc(s*.75, 0, s*.22, 0, Math.PI*2); ctx.fill();
 
@@ -670,7 +650,6 @@ class Dragonfly {
     }
 }
 
-/* ── Geometric Bird ─────────────────────── */
 class Bird {
     constructor() { this.reset(true); }
     reset(initial = false) {
@@ -699,13 +678,11 @@ class Bird {
         if (this.dir < 0) ctx.scale(-1, 1);
         ctx.globalAlpha = 0.65;
 
-        // Body
         ctx.fillStyle = '#1a3a1a';
         ctx.beginPath();
         ctx.ellipse(0, 0, s*.8, s*.28, 0, 0, Math.PI*2);
         ctx.fill();
 
-        // Left wing
         ctx.save(); ctx.translate(-s*.3, 0); ctx.rotate(-wA);
         ctx.fillStyle = '#264a26';
         ctx.beginPath();
@@ -713,7 +690,6 @@ class Bird {
         ctx.closePath(); ctx.fill();
         ctx.restore();
 
-        // Right wing
         ctx.save(); ctx.translate(s*.3, 0); ctx.rotate(wA);
         ctx.fillStyle = '#264a26';
         ctx.beginPath();
@@ -721,10 +697,8 @@ class Bird {
         ctx.closePath(); ctx.fill();
         ctx.restore();
 
-        // Head
         ctx.fillStyle = '#1a3a1a';
         ctx.beginPath(); ctx.arc(s*.75, -s*.08, s*.28, 0, Math.PI*2); ctx.fill();
-        // Beak
         ctx.fillStyle = '#8a7a2a';
         ctx.beginPath();
         ctx.moveTo(s*1.1, -s*.08); ctx.lineTo(s*1.45, -s*.02); ctx.lineTo(s*1.1, s*.04);
@@ -734,7 +708,6 @@ class Bird {
     }
 }
 
-/* ── Gecko / Leaf Insect (decorative floater) */
 class GeoBeetle {
     constructor() { this.reset(); }
     reset() {
@@ -766,30 +739,26 @@ class GeoBeetle {
         ctx.rotate(this.angle);
         ctx.globalAlpha = 0.75;
 
-        // Wing covers (elytra)
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.ellipse(-s*.15,  s*.15, s*.45, s*.25, -0.4, 0, Math.PI*2); ctx.fill();
         ctx.beginPath();
         ctx.ellipse(-s*.15, -s*.15, s*.45, s*.25,  0.4, 0, Math.PI*2); ctx.fill();
 
-        // Body segments
         ctx.fillStyle = '#0a0a0a';
         ctx.beginPath();
-        ctx.ellipse(s*.25, 0, s*.22, s*.18, 0, 0, Math.PI*2); ctx.fill();  // head
+        ctx.ellipse(s*.25, 0, s*.22, s*.18, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(-s*.1, 0, s*.3,  s*.2,  0, 0, Math.PI*2); ctx.fill();  // thorax
+        ctx.ellipse(-s*.1, 0, s*.3,  s*.2,  0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(-s*.55,0, s*.35, s*.22, 0, 0, Math.PI*2); ctx.fill();  // abdomen
+        ctx.ellipse(-s*.55,0, s*.35, s*.22, 0, 0, Math.PI*2); ctx.fill();
 
-        // Legs (3 pairs)
         ctx.strokeStyle = '#0a0a0a'; ctx.lineWidth = 1;
         for (let i = -1; i <= 1; i++) {
             const lx = i * s * 0.3 - s*.05;
             ctx.beginPath(); ctx.moveTo(lx, s*.18); ctx.lineTo(lx - s*.3, s*.55); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(lx, -s*.18); ctx.lineTo(lx - s*.3,-s*.55); ctx.stroke();
         }
-        // Antennae
         ctx.beginPath(); ctx.moveTo(s*.4,  s*.08); ctx.lineTo(s*.85,  s*.35); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(s*.4, -s*.08); ctx.lineTo(s*.85, -s*.35); ctx.stroke();
 
@@ -812,97 +781,6 @@ function initCreatures() {
     beetles     = Array.from({length: 8},   () => new GeoBeetle());
 }
 
-/* ── Draw static foliage background ────────── */
-function drawBackground() {
-    if (!bgDirty) return;
-    bgDirty = false;
-    if (!bgCanvas) bgCanvas = document.createElement('canvas');
-    bgCanvas.width  = w;
-    bgCanvas.height = h;
-    const bc = bgCanvas.getContext('2d');
-
-    // Base gradient
-    const grad = bc.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0,   '#040c04');
-    grad.addColorStop(0.6, '#060e06');
-    grad.addColorStop(1,   '#08140a');
-    bc.fillStyle = grad;
-    bc.fillRect(0, 0, w, h);
-
-    // Background tree silhouettes (far, faint)
-    drawSilhouetteRow(bc, w, h, 0.55, '#0c1e0c', 14, 0.55);
-    // Mid layer
-    drawSilhouetteRow(bc, w, h, 0.70, '#091709', 10, 0.75);
-    // Fern/bush layer at bottom
-    drawFernRow(bc, w, h);
-    // Ground fog
-    const fog = bc.createLinearGradient(0, h*0.78, 0, h);
-    fog.addColorStop(0, 'transparent');
-    fog.addColorStop(1, 'rgba(10,25,10,0.6)');
-    bc.fillStyle = fog;
-    bc.fillRect(0, h*0.78, w, h*0.22);
-}
-
-function drawSilhouetteRow(bc, W, H, heightFactor, color, count, opacity) {
-    bc.globalAlpha = opacity;
-    bc.fillStyle   = color;
-    for (let i = 0; i < count; i++) {
-        const x      = (i / count) * W + (Math.random() - 0.5) * (W / count) * 0.8;
-        const tH     = H * heightFactor * (0.7 + Math.random() * 0.6);
-        const spread = 18 + Math.random() * 30;
-        drawTree(bc, x, H, tH, spread);
-    }
-    bc.globalAlpha = 1;
-}
-
-function drawTree(bc, x, baseY, height, spread) {
-    bc.fillRect(x - spread*.08, baseY - height*.22, spread*.16, height*.25);
-    for (let l = 0; l < 3; l++) {
-        const ly  = baseY - height * (.25 + l * .28);
-        const lsp = spread * (1 - l * .22);
-        const lh  = height * .38;
-        bc.beginPath();
-        bc.moveTo(x, ly - lh);
-        bc.lineTo(x - lsp, ly);
-        bc.lineTo(x + lsp, ly);
-        bc.closePath(); bc.fill();
-    }
-    // Extra leaf blobs
-    for (let b = 0; b < 3; b++) {
-        const bx = x + (Math.random()-.5) * spread;
-        const by = baseY - height * (.3 + Math.random() * .6);
-        const br = spread * (.18 + Math.random() * .22);
-        bc.beginPath(); bc.arc(bx, by, br, 0, Math.PI*2); bc.fill();
-    }
-}
-
-function drawFernRow(bc, W, H) {
-    bc.globalAlpha = 0.5;
-    bc.fillStyle   = '#071207';
-    for (let i = 0; i < 18; i++) {
-        const x = (i / 18) * W + Math.random() * (W / 18);
-        const sz = 30 + Math.random() * 60;
-        // Fern frond shape
-        for (let f = 0; f < 5; f++) {
-            const a = (f / 5) * Math.PI - Math.PI * 0.1;
-            bc.beginPath();
-            bc.moveTo(x, H);
-            bc.quadraticCurveTo(
-                x + Math.cos(a) * sz * 0.6,
-                H - Math.sin(a) * sz * 0.7,
-                x + Math.cos(a) * sz,
-                H - Math.sin(a) * sz
-            );
-            bc.lineWidth = 4 + Math.random() * 4;
-            bc.strokeStyle = '#071207';
-            bc.stroke();
-        }
-        // Fern leaf cluster
-        bc.beginPath(); bc.arc(x, H - sz, sz * 0.45, 0, Math.PI*2); bc.fill();
-    }
-    bc.globalAlpha = 1;
-}
-
 /* =============================================
    FOREST CURTAIN CANVAS INIT
    ============================================= */
@@ -915,7 +793,6 @@ function initCurtains(accentColor) {
         cv.width  = CW; cv.height = CH;
         const c   = cv.getContext('2d');
 
-        // Base: deep forest dark
         const bg  = c.createLinearGradient(0, 0, CW, 0);
         if (side === 'left') {
             bg.addColorStop(0, '#030803');
@@ -927,7 +804,6 @@ function initCurtains(accentColor) {
         c.fillStyle = bg;
         c.fillRect(0, 0, CW, CH);
 
-        // Tree layers (far → front)
         const layers = [
             { n: 10, hF: 0.45, col: '#0a1e0a', op: 0.6 },
             { n: 8,  hF: 0.62, col: '#0d270d', op: 0.75 },
@@ -946,20 +822,18 @@ function initCurtains(accentColor) {
         });
         c.globalAlpha = 1;
 
-        // Bioluminescent glows (mushrooms, flowers)
         for (let g = 0; g < 25; g++) {
             const gx = Math.random() * CW;
             const gy = CH * 0.55 + Math.random() * CH * 0.45;
             const gr = Math.random() * 18 + 5;
             const glowCols = ['#00ff8855','#88ff0055','#ffff0055','#00ffcc44'];
-            const gc = glowCols[Math.floor(Math.random() * glowCols.length)];
+            const gc = glowCols[Math.floor(Math.random() * cols.length)];
             const gg = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
             gg.addColorStop(0, gc); gg.addColorStop(1, 'transparent');
             c.fillStyle = gg;
             c.beginPath(); c.arc(gx, gy, gr, 0, Math.PI*2); c.fill();
         }
 
-        // Accent tier glow at inner edge (center-facing edge)
         if (accentColor) {
             const edgeX = side === 'left' ? CW : 0;
             const ag    = c.createLinearGradient(edgeX, 0, edgeX - (side==='left'?1:-1)*CW*0.35, 0);
@@ -970,7 +844,6 @@ function initCurtains(accentColor) {
             c.fillRect(0, 0, CW, CH);
         }
 
-        // Inner-edge vignette for seamless split illusion
         const innerX = side === 'left' ? CW : 0;
         const iv = c.createLinearGradient(
             innerX, 0,
@@ -984,9 +857,7 @@ function initCurtains(accentColor) {
 }
 
 function drawCurtainTree(c, x, baseY, height, spread) {
-    // Trunk
     c.fillRect(x - spread*.09, baseY - height*.25, spread*.18, height*.28);
-    // Canopy tiers
     for (let l = 0; l < 3; l++) {
         const ly  = baseY - height * (.22 + l*.27);
         const lsp = spread * (1 - l*.2);
@@ -997,7 +868,6 @@ function drawCurtainTree(c, x, baseY, height, spread) {
         c.lineTo(x + lsp, ly);
         c.closePath(); c.fill();
     }
-    // Leaf blobs
     for (let b = 0; b < 4; b++) {
         const bx = x + (Math.random()-.5) * spread * 1.1;
         const by = baseY - height * (.3 + Math.random() * .62);
@@ -1009,17 +879,8 @@ function drawCurtainTree(c, x, baseY, height, spread) {
    5. MAIN RENDER LOOP
    ============================================= */
 function animate() {
-    // Background fill
-    if (isWarping) {
-        ctx.fillStyle = 'rgba(6,12,6,0.25)';
-    } else {
-        drawBackground();
-        ctx.drawImage(bgCanvas, 0, 0);
-        ctx.fillStyle = 'rgba(6,12,6,0.18)';
-    }
-    ctx.fillRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
 
-    // Draw creatures
     fireflies.forEach  (f => { f.update(); f.draw(); });
     beetles.forEach    (b => { b.update(); b.draw(); });
     butterflies.forEach(b => { b.update(); b.draw(); });
