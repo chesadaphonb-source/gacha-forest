@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Forest Wish System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;600;800&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+
+<body>
+    <!-- Background canvas (creatures + foliage) -->
+    <canvas id="starCanvas"></canvas>
+
+    <!-- Forest curtain panels for wish animation -->
+    <canvas id="leftCurtain"  class="forest-curtain" id="leftCurtain"></canvas>
+    <canvas id="rightCurtain" class="forest-curtain" id="rightCurtain"></canvas>
+
+    <!-- Brief green flash overlay -->
+    <div id="flashOverlay"></div>
+
+    <!-- ========== SETUP SCREEN ========== -->
+    <div class="container" id="setupContainer">
+        <div class="setup-box">
+            <div class="logo-wrap">
+                <span class="leaf-icon">🌿</span>
+                <h1 class="gold-text">Forest Wish System</h1>
+                <span class="leaf-icon">🌿</span>
+            </div>
+            <p class="sub-text">Connecting to the Ancient Grove…</p>
+            <input type="text" id="sheetUrl"
+                   value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSOJsl1kh0r-xTWTqrXExZZfsuaZSiGUgGa9P8swt1NIIkULgR8mhbHedmDeZpq888KAZmqHAwVNXDY/pub?output=csv"
+                   placeholder="วางลิงก์ CSV ตรงนี้…">
+            <br>
+            <button class="btn-wish" onclick="loadData()">Load Data (Admin Only)</button>
+        </div>
+    </div>
+
+    <!-- ========== MAIN SCREEN ========== -->
+    <div class="container" id="mainScreen" style="display:none;">
+        <div id="bannerDisplay" class="banner-display"></div>
+        <div class="pool-count" id="poolCount">Waiting for the Forest Spirit…</div>
+        <div id="adminControls" style="display:none;">
+            <button class="btn-wish start-btn" onclick="triggerWish()">
+                🌿 START WISH 🌿
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== RESULT SCREEN ========== -->
+    <div id="resultScreen">
+        <div class="result-header">
+            <h1 id="resultTitle">Rewards</h1>
+        </div>
+        <div class="result-content">
+            <div class="result-grid" id="resultGrid"></div>
+        </div>
+        <div class="control-bar" id="resultControls" style="display:none;">
+            <button class="btn-secondary" onclick="closeResult()">❮ ปิดหน้าต่างนี้</button>
+            <button class="btn-wish"      onclick="nextRound()">รางวัลถัดไป ❯</button>
+        </div>
+    </div>
+
+    <!-- ========== HISTORY BUTTON ========== -->
+    <button class="btn-history-toggle" onclick="toggleHistory()">🌿 History</button>
+
+    <!-- ========== HISTORY MODAL ========== -->
+    <div id="historyModal" class="history-modal">
+        <div class="history-content">
+            <div class="history-header">
+                <h2>🌿 Hall of the Grove 🌿</h2>
+                <button class="close-btn" onclick="toggleHistory()">×</button>
+            </div>
+            <div id="historyList" class="history-body">
+                <p style="text-align:center; color:#888;">ยังไม่มีผู้ได้รับรางวัล</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
