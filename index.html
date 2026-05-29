@@ -11,17 +11,15 @@
 </head>
 
 <body>
-    <!-- Background canvas (creatures + foliage) -->
+    <div id="forestBg"></div>
+
     <canvas id="starCanvas"></canvas>
 
-    <!-- Forest curtain panels for wish animation -->
     <canvas id="leftCurtain"  class="forest-curtain"></canvas>
     <canvas id="rightCurtain" class="forest-curtain"></canvas>
 
-    <!-- Brief green flash overlay -->
     <div id="flashOverlay"></div>
 
-    <!-- ========== SETUP SCREEN ========== -->
     <div class="container" id="setupContainer">
         <div class="setup-box">
             <div class="logo-wrap">
@@ -38,7 +36,6 @@
         </div>
     </div>
 
-    <!-- ========== MAIN SCREEN ========== -->
     <div class="container" id="mainScreen" style="display:none;">
         <div id="bannerDisplay" class="banner-display"></div>
         <div class="pool-count" id="poolCount">Waiting for the Forest Spirit…</div>
@@ -49,7 +46,6 @@
         </div>
     </div>
 
-    <!-- ========== RESULT SCREEN ========== -->
     <div id="resultScreen">
         <div class="result-header">
             <h1 id="resultTitle">Rewards</h1>
@@ -63,10 +59,8 @@
         </div>
     </div>
 
-    <!-- ========== HISTORY BUTTON ========== -->
     <button class="btn-history-toggle" onclick="toggleHistory()">🌿 History</button>
 
-    <!-- ========== HISTORY MODAL ========== -->
     <div id="historyModal" class="history-modal">
         <div class="history-content">
             <div class="history-header">
