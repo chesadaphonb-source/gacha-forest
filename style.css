@@ -15,10 +15,11 @@
 }
 
 /* ── Body ── */
+/* ── Body (ปรับให้โปร่งใส เพื่อเปิดทางให้ภาพด้านหลังทะลุขึ้นมา) ── */
 body {
     margin: 0;
     font-family: 'Kanit', sans-serif;
-    background-color: var(--bg-dark);
+    background-color: transparent; /* 🔥 เปลี่ยนจาก var(--bg-dark) เป็นโปร่งใสซะ! */
     color: var(--cream);
     overflow: hidden;
     height: 100vh;
@@ -27,26 +28,48 @@ body {
     align-items: center;
 }
 
-/* ── 🌲 ชั้นแผ่นภาพต้นไม้โลก Yggdrasil เวอร์ชันโคตรเฟี้ยว 🌲 ── */
+/* ── 🌲 ชั้นผูกภาพป่าโบราณ ตรึงแผ่นหลังเต็มระบบ 🌲 ── */
+/* =============================================
+   FOREST WISH SYSTEM — Jungle Theme
+   ============================================= */
+
+:root {
+    --bg-dark:      #060e06;
+    --card-bg:      #162416;
+    --gold:         #c8a84b;
+    --gold-dark:    #a8882b;
+    --green-mid:    #1a4a1a;
+    --green-leaf:   #2d7a2d;
+    --amber:        #d4873c;
+    --cream:        #e8f0d8;
+    --control-bar-height: 80px;
+}
+
+/* ── Body (ปรับให้โปร่งใส เพื่อเปิดทางให้ภาพด้านหลังทะลุขึ้นมา) ── */
+body {
+    margin: 0;
+    font-family: 'Kanit', sans-serif;
+    background-color: transparent;
+    color: var(--cream);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ── 🌲 ชั้นผูกภาพป่าโบราณ ตรึงแผ่นหลังเต็มระบบ 🌲 ── */
 #forestBg {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: -2;
-    background-image: url('forest-bg.png'); /* ภาพต้นไม้โลกยักษ์ของมึง */
+    z-index: -2; 
+    background-color: var(--bg-dark); 
+    background-image: url('forest-bg.png'); /* 🔥 ดึงภาพต้นไม้โลกยักษ์ตัวจริงในเครื่องมาใช้งานอันเดียวจบ! */
     background-size: cover;
     background-position: center;
     pointer-events: none;
-    
-    /* 🔥 เปิดระบบอนิเมชัน พลังงานไหลเวียนวูบวาบช้า ๆ บนจอโปรเจกเตอร์ */
     animation: yggdrasilPulse 10s ease-in-out infinite;
-}
-
-/* ลูปคุมออร่าป่ามหาเวทย์ ให้มีความคอนทราสต์และความอิ่มตัวของสีขยับเหมือนมีชีวิต */
-@keyframes yggdrasilPulse {
-    0%   { filter: brightness(0.85) contrast(1) saturate(1); }
-    50%  { filter: brightness(1.2) contrast(1.15) saturate(1.35); }
-    100% { filter: brightness(0.85) contrast(1) saturate(1); }
 }
 
 /* ── Background canvas (สำหรับรันสัตว์ป่า) ── */
