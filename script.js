@@ -1,5 +1,5 @@
 /* =============================================
-   FOREST WISH SYSTEM — script.js
+   FOREST WISH SYSTEM — Projector Local Mode
    ============================================= */
 
 /* --- Configuration --- */
@@ -11,21 +11,6 @@ const prizes = [
     { name: "Rank 1 (Grand)",   count: 3,  color: "#f59e0b" }
 ];
 
-/* --- Firebase Config --- */
-const firebaseConfig = {
-    apiKey: "AIzaSyBesRV471aZjkFADTCKWg_YfipTSY4CCts",
-    authDomain: "new-gacha.firebaseapp.com",
-    databaseURL: "https://new-gacha-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "new-gacha",
-    storageBucket: "new-gacha.firebasestorage.app",
-    messagingSenderId: "192874951341",
-    appId: "1:192874951341:web:9d3b3c58ef64b1526d8c24",
-    measurementId: "G-964CY2L5TC"
-};
-
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
 /* --- Game State --- */
 let participants   = [];
 let headers        = [];
@@ -33,10 +18,9 @@ let currentTier    = 0;
 let isWarping      = false;
 let currentTierColor = "#65d4a0";
 let winnersHistory = {};
-let isAdmin        = false;
 
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('role') === 'admin') isAdmin = true;
+// ผูกฟังก์ชันส่งประวัติยอดลง Google Sheets (Apps Script ของมึงยังอยู่ทำงานปกติหลังบ้าน)
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzya9mZ86bYNaZdXLgr46DjX1afWMxEs10kjyWdnT77C3vcxO2hA6APWco3Pz5vnTIW/exec";
 
 /* =============================================
    HELPER
@@ -58,71 +42,24 @@ function getDisplayData(winner) {
 }
 
 /* =============================================
-   1. INIT & LISTENER SYSTEM
+   1. INIT SYSTEM
    ============================================= */
 window.onload = function () {
-    console.log("Forest Wish System. Role:", isAdmin ? "ADMIN" : "AUDIENCE");
+    console.log("Forest Wish System — Projector Mode Initialized");
     prizes.forEach(p => { if (!winnersHistory[p.name]) winnersHistory[p.name] = []; });
 
     initCreatures();
     initCurtains();
     animate();
 
-    if (isAdmin) {
-        document.getElementById('setupContainer').style.display = 'flex';
-        document.getElementById('adminControls').style.display  = 'block';
-        document.getElementById('resultControls').style.display = 'flex';
-    } else {
-        document.getElementById('setupContainer').style.display = 'none';
-        document.getElementById('mainScreen').style.display     = 'block';
-        document.getElementById('poolCount').innerText          = "Ready for the show…";
-
-        db.ref('gameState').on('value', snapshot => {
-            const data = snapshot.val();
-            if (data) handleSync(data);
-        });
-        db.ref('history').on('value', snapshot => {
-            const data = snapshot.val();
-            if (data) { winnersHistory = data; console.log("History updated from Firebase"); }
-        });
-    }
+    // บังคับเปิดหน้า Setup ล็อคอินแอดมินเครื่องหลักขึ้นจอทันทีออโต้
+    document.getElementById('setupContainer').style.display = 'flex';
+    document.getElementById('adminControls').style.display  = 'block';
+    document.getElementById('resultControls').style.display = 'flex';
 };
 
-function handleSync(data) {
-    if (isAdmin) return;
-
-    if (data.status === 'SETUP') {
-        document.getElementById('setupContainer').style.display = 'none';
-        document.getElementById('resultScreen').style.display   = 'none';
-        document.getElementById('mainScreen').style.display     = 'block';
-        document.getElementById('bannerDisplay').innerHTML = `
-            <div style="margin-top:20vh;padding:40px;background:rgba(10,30,10,0.5);
-                        backdrop-filter:blur(10px);border-radius:20px;
-                        border:1px solid rgba(60,120,60,0.3);display:inline-block;
-                        animation:pulse 2s infinite;">
-                <h1 style="font-size:3em;color:#5aaa5a;margin:0 0 20px 0;">🌿</h1>
-                <h2 style="color:#ccc;margin:0;">รอดำเนินการ…</h2>
-                <p style="color:#666;margin-top:10px;">กรุณารอเจ้าหน้าที่ตั้งค่าระบบสักครู่</p>
-            </div>`;
-        if (data.headers) headers = data.headers;
-        document.getElementById('poolCount').style.display = 'none';
-        return;
-    }
-
-    document.getElementById('poolCount').style.display = 'block';
-    if (data.tierIndex !== undefined) { currentTier = data.tierIndex; updateUI(false); }
-
-    if      (data.status === 'WARPING') { playWarpAnimation(data.winners); }
-    else if (data.status === 'REVEAL')  {
-        if (document.getElementById('resultScreen').style.display === 'none')
-            showResults(data.winners || [], prizes[currentTier]);
-    }
-    else if (data.status === 'IDLE')    { closeResult(); }
-    else if (data.status === 'RESET')   { location.reload(); }
-}
-
 /* =============================================
-   2. ADMIN ACTIONS
+   2. ACTIONS (LOCAL RUN)
    ============================================= */
 function loadData() {
     const url = document.getElementById('sheetUrl').value.trim();
@@ -139,7 +76,7 @@ function loadData() {
 
             headers = lines[0].split(',').map(h => h.trim());
             participants = lines.slice(1).map(line => {
-                // 🔥 ตัวหั่นคำ CSV ขั้นสูง ป้องกันระบบเลื่อนคอลัมน์เวลาเจอเครื่องหมายคอมม่าในตาราง
+                // Regex ขั้นสูง ป้องกันระบบสลับช่องเวลาเจอเครื่องหมายคอมม่าในข้อมูลตาราง
                 const data = line.match(/(?:[^,]*|"(?:[^"]|\\")*")(?:,|$)/g).map(s => {
                     return s.replace(/,$/, '').replace(/^"|"$/g, '').replace(/\\"/g, '"').trim();
                 });
@@ -151,12 +88,10 @@ function loadData() {
             }).filter(item => item !== null);
 
             prizes.forEach(p => winnersHistory[p.name] = []);
-            db.ref('history').remove();
 
             document.getElementById('setupContainer').style.display = 'none';
             document.getElementById('mainScreen').style.display     = 'block';
 
-            db.ref('gameState').set({ status: 'IDLE', tierIndex: 0, winners: [], timestamp: Date.now() });
             updateUI(true);
             alert(`โหลดข้อมูลสำเร็จ! ผู้เข้าร่วม: ${participants.length} คน`);
         })
@@ -170,22 +105,16 @@ function loadData() {
 function updateUI(showCount = false) {
     if (currentTier >= prizes.length) {
         let endHtml = `<h1 class="gold-text" style="font-family:'Cinzel Decorative',serif;">🌿 จบกิจกรรม! 🌿</h1>
-                       <p style="color:#8aaa8a;margin-bottom:20px;">ขอบคุณผู้ร่วมสนุกทุกคน</p>`;
-        if (isAdmin) {
-            endHtml += `<button onclick="resetGame()" style="
-                padding:15px 40px;font-size:22px;font-family:'Kanit',sans-serif;
-                background:linear-gradient(45deg,#2d5a2d,#4a8a4a);
-                color:#e8f0d8;border:none;border-radius:50px;cursor:pointer;
-                box-shadow:0 0 20px rgba(60,160,60,0.4);font-weight:bold;transition:transform 0.2s;"
-                onmouseover="this.style.transform='scale(1.1)'"
-                onmouseout ="this.style.transform='scale(1)'">
-                🔄 เริ่มกิจกรรมใหม่
-            </button>`;
-        } else {
-            endHtml += `<div style="margin-top:20px;color:#5a8a5a;font-size:18px;
-                background:rgba(20,50,20,0.3);padding:10px 20px;border-radius:20px;display:inline-block;">
-                ⏳ กรุณารอเจ้าหน้าที่ดำเนินการ…</div>`;
-        }
+                       <p style="color:#8aaa8a;margin-bottom:20px;">ขอบคุณผู้ร่วมสนุกทุกคน</p>
+                       <button onclick="resetGame()" style="
+                        padding:15px 40px;font-size:22px;font-family:'Kanit',sans-serif;
+                        background:linear-gradient(45deg,#2d5a2d,#4a8a4a);
+                        color:#e8f0d8;border:none;border-radius:50px;cursor:pointer;
+                        box-shadow:0 0 20px rgba(60,160,60,0.4);font-weight:bold;transition:transform 0.2s;"
+                        onmouseover="this.style.transform='scale(1.1)'"
+                        onmouseout ="this.style.transform='scale(1)'">
+                        🔄 เริ่มกิจกรรมใหม่
+                       </button>`;
         document.getElementById('bannerDisplay').innerHTML = endHtml;
         document.getElementById('adminControls').style.display = 'none';
         return;
@@ -199,18 +128,13 @@ function updateUI(showCount = false) {
                    text-shadow:0 0 25px ${tier.color}88;">${tier.name}</h1>
         <p style="font-size:18px;color:#8aaa8a;">จำนวนรางวัล: ${tier.count}</p>`;
 
-    if (isAdmin) document.getElementById('adminControls').style.display = 'block';
+    document.getElementById('adminControls').style.display = 'block';
     if (showCount)
         document.getElementById('poolCount').innerText = `คงเหลือผู้ลุ้นรางวัล: ${participants.length} คน`;
 }
 
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzya9mZ86bYNaZdXLgr46DjX1afWMxEs10kjyWdnT77C3vcxO2hA6APWco3Pz5vnTIW/exec";
-
 function triggerWish() {
-    if (!isAdmin) return;
     if (participants.length === 0) return alert("รายชื่อหมดแล้ว!");
-
-    if (headers && headers.length > 0) db.ref('config/headers').set(headers);
 
     const tier      = prizes[currentTier];
     const drawCount = Math.min(tier.count, participants.length);
@@ -229,7 +153,6 @@ function triggerWish() {
 
     if (!winnersHistory[tier.name]) winnersHistory[tier.name] = [];
     winnersHistory[tier.name].push(...displayWinners);
-    db.ref('history/' + tier.name).set(winnersHistory[tier.name]);
 
     updateUI(true);
 
@@ -242,16 +165,11 @@ function triggerWish() {
         }).catch(err => console.error(err));
     }
 
-    db.ref('gameState').set({
-        status: 'WARPING', tierIndex: currentTier,
-        winners: displayWinners, timestamp: Date.now()
-    });
-
     playWarpAnimation(displayWinners);
 }
 
 /* =============================================
-   FOREST CURTAIN ANIMATION (replaces meteor)
+   FOREST CURTAIN ANIMATION
    ============================================= */
 function playWarpAnimation(winners) {
     const tier        = prizes[currentTier];
@@ -304,7 +222,6 @@ function playWarpAnimation(winners) {
         flash.style.opacity = '0';
 
         showResults(winners, tier);
-        if (isAdmin) db.ref('gameState').update({ status: 'REVEAL' });
 
         const burstEasing = 'cubic-bezier(0.55, 0, 0.1, 1)';
         leftCanvas.style.transition  = `transform 0.55s ${burstEasing}`;
@@ -355,20 +272,16 @@ function closeResult() {
     document.getElementById('resultScreen').style.display  = 'none';
     document.querySelector('.container').style.opacity     = '1';
     document.querySelector('.btn-history-toggle').style.display = 'block';
-    if (isAdmin) db.ref('gameState').update({ status: 'IDLE' });
 }
 
 function nextRound() {
     closeResult();
     currentTier++;
-    if (isAdmin) {
-        db.ref('gameState').update({ status: 'IDLE', tierIndex: currentTier });
-        updateUI(true);
-    }
+    updateUI(true);
 }
 
 /* =============================================
-   3. HISTORY & EXTRAS
+   3. HISTORY & MODAL CONTROL
    ============================================= */
 function toggleHistory() {
     const modal = document.getElementById('historyModal');
@@ -432,28 +345,11 @@ window.switchTab = function (event, tabId) {
 
 function resetGame() {
     if (!confirm("⚠️ WARNING: ต้องการล้างระบบทั้งหมด?\n(ประวัติจะหายไป และกลับสู่หน้าใส่ CSV)")) return;
-    db.ref('history').remove();
-    db.ref('gameState').set({ status: 'SETUP', timestamp: Date.now() });
     window.location.reload();
 }
 
-// 👑 โค้ดดักฟังหัวคอลัมน์จาก Firebase กลับมาประดับบารมีที่เดิมแล้วไอ้เจษ!
-db.ref('config/headers').on('value', snapshot => {
-    if (snapshot.exists()) {
-        const serverHeaders = snapshot.val();
-        if (!headers || headers.length === 0) {
-            headers = serverHeaders;
-            console.log("✅ Sync Headers:", headers);
-            const historyModal = document.getElementById('historyModal');
-            if (historyModal && historyModal.style.display === 'flex') {
-                toggleHistory(); setTimeout(toggleHistory, 50);
-            }
-        }
-    }
-});
-
 /* =============================================
-   4. CANVAS — MAIN BACKGROUND
+   4. CANVAS — CREATURES ENGINE
    ============================================= */
 const canvas = document.getElementById('starCanvas');
 const ctx    = canvas.getContext('2d');
@@ -469,7 +365,6 @@ window.addEventListener('resize', resize); resize();
 /* ────────────────────────────────────────────
    CREATURE CLASSES
    ──────────────────────────────────────────── */
-
 class Firefly {
     constructor() { this.reset(); }
     reset() {
@@ -827,7 +722,8 @@ function initCurtains(accentColor) {
             const gy = CH * 0.55 + Math.random() * CH * 0.45;
             const gr = Math.random() * 18 + 5;
             const glowCols = ['#00ff8855','#88ff0055','#ffff0055','#00ffcc44'];
-            const gc = glowCols[Math.floor(Math.random() * cols.length)];
+            //  ซ่อมบั๊กพิมพ์คำผิดจาก cols.length เป็น glowCols.length เรียบร้อย สัตว์ป่าฟื้นคืนชีพชัวร์สัส!
+            const gc = glowCols[Math.floor(Math.random() * glowCols.length)];
             const gg = c.createRadialGradient(gx, gy, 0, gx, gy, gr);
             gg.addColorStop(0, gc); gg.addColorStop(1, 'transparent');
             c.fillStyle = gg;
@@ -876,11 +772,13 @@ function drawCurtainTree(c, x, baseY, height, spread) {
 }
 
 /* =============================================
-   5. MAIN RENDER LOOP
+   5. MAIN RENDER LOOP (LOCAL TRANSPARENT)
    ============================================= */
 function animate() {
+    // เคลียร์จอใสสะอาด เพื่อภาพพื้นหลังป่าชั้น CSS ทะลุขึ้นมามีมิติ
     ctx.clearRect(0, 0, w, h);
 
+    // ปล่อยฝูงสัตว์ป่าโบยบินอย่างอิสระไร้บั๊กกวนใจ
     fireflies.forEach  (f => { f.update(); f.draw(); });
     beetles.forEach    (b => { b.update(); b.draw(); });
     butterflies.forEach(b => { b.update(); b.draw(); });
